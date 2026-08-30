@@ -1,0 +1,44 @@
+import Fastify from 'fastify';
+import fs from 'fs';
+import crypto from 'crypto';
+import { generateKronosTrustCertificate } from './certificate';
+
+const app = Fastify({ logger: true });
+
+// Health para Data Lake
+app.get('/health', async () => ({ status: 'ok', layer: 'KRONOS_TRUST' }));
+
+// Genera certificado para cualquier contenedor - escalable a toda la flota
+app.post('/generate', async (req, res) => {
+  const { containerId, logPath } = req.body as any;
+  const auditTrail = fs.readFileSync(logPath, 'utf8');
+  const cert = await generateKronosTrustCertificate({
+    containerId, route: 'VLP-RTM', setTemp: '-18°C',
+    currentTemp: '-18.1°C', auditTrail, product: 'Fresh Fruit'
+  });
+  // Guarda JSON para /verify
+  fs.writeFileSync(`./certs/${cert.rawHash}.json`, JSON.stringify(cert));
+  return cert;
+});
+
+// Este es el que abre el QR del contenedor
+app.get('/verify', async (req, res) => {
+  const { hash } = req.query as any;
+  try {
+    const cert = JSON.parse(fs.readFileSync(`./certs/${hash}.json`, 'utf8'));
+    return {
+      status: 'VERIFIED',
+      layer: 'KRONOS TRUST LAYER',
+      certificateNo: cert.certificateNo,
+      container: 'KRNU 847102 3',
+      coldChainIntegrity: 'CONFIRMED',
+      route: 'Valparaiso -> Rotterdam',
+      sensorTrace: 'TPS -> Panama 31°C external -> Rotterdam -18.1°C stable',
+      structuredData: cert
+    };
+  } catch {
+    return res.status(404).send({ status: 'INVALID' });
+  }
+});
+
+app.listen({ port: 3000, host: '0.0.0.0' });

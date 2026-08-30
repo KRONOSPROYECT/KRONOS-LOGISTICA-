@@ -1,0 +1,9 @@
+{
+  "name": "kronos-trust-layer",
+  "version": "1.0.0",
+  "scripts": { "start": "ts-node src/index.ts", "build": "tsc" },
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "qrcode": "^1.5.3"
+  }
+}

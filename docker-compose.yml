@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  kronos-trust:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./logs:/app/logs:ro
+      - ./certs:/app/certs
+    environment:
+      - NODE_ENV=production
+      - KRONOS_ISSUER=KRONOS_TRUST_LAYER
+      - VERIFY_BASE_URL=https://kronos-assurance.global/verify
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s

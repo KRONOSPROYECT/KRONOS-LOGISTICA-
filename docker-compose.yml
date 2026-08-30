@@ -1,5 +1,28 @@
 version: '3.8'
 services:
+  kronos-verifier:
+    build:
+      context: .
+      dockerfile: Dockerfile.kronos
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATALAKE_URL=http://datalake:8080/events
+    volumes:
+      - ./audit_trail.log:/app/audit_trail.log:ro
+    networks:
+      - kronos-net
+  datalake:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - kronos-net
+networks:
+  kronos-net:
+version: '3.8'
+services:
   kronos-trust:
     build: .
     ports:
